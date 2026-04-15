@@ -1,25 +1,35 @@
-const config = {
-    apiUrl: process.env.API_URL || 'http://localhost:3000',
-    timeout: parseInt(process.env.TIMEOUT) || 5000,
-    retryAttempts: parseInt(process.env.RETRY_ATTEMPTS) || 3,
-    logLevel: process.env.LOG_LEVEL || 'info',
+export interface Config {
+    apiUrl: string;
+    timeout: number;
+    enableCaching: boolean;
+}
+
+export const defaultConfig: Config = {
+    apiUrl: 'https://api.roblox.com',
+    timeout: 5000,
+    enableCaching: true,
 };
 
-export const getConfig = () => config;
+export function optimizeConfig(config: Config): Config {
+    const optimizedConfig: Config = {
+        ...defaultConfig,
+        ...config,
+    };
 
-export const setConfig = (updates) => {
-    Object.keys(updates).forEach(key => {
-        if (config.hasOwnProperty(key)) {
-            config[key] = updates[key];
-        }
-    });
-};
-
-export const validateConfig = () => {
-    if (!config.apiUrl) {
-        throw new Error('API URL is required');
+    if (optimizedConfig.enableCaching) {
+        optimizedConfig.timeout = Math.max(1000, optimizedConfig.timeout);
     }
-    if (config.timeout <= 0) {
-        throw new Error('Timeout must be a positive number');
+
+    return optimizedConfig;
+}
+
+export function getEffectiveApiUrl(config: Config): string {
+    if (config.apiUrl.endsWith('/')) {
+        return config.apiUrl.slice(0, -1);
     }
-};
+    return config.apiUrl;
+}
+
+export function logConfig(config: Config): void {
+    console.log('Current Configuration:', JSON.stringify(config, null, 2));
+}
