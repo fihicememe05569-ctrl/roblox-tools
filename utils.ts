@@ -1,38 +1,45 @@
-export const formatDate = (date: Date, locale: string = 'en-US'): string => {
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
-};
+import * as fs from 'fs';
+import * as path from 'path';
 
-export const generateUniqueId = (): string => {
-    return 'id-' + Math.random().toString(36).substr(2, 16);
-};
+class Logger {
+    private logDir: string;
+    private maxFileSize: number;
+    private logFilePath: string;
 
-export const debounce = <T extends (...args: any[]) => void>(func: T, delay: number): T => {
-    let timeoutId: NodeJS.Timeout | null;
-    return function(this: any, ...args: any[]) {
-        if (timeoutId) {
-            clearTimeout(timeoutId);
+    constructor(logDir: string, maxFileSize: number) {
+        this.logDir = logDir;
+        this.maxFileSize = maxFileSize;
+        this.logFilePath = path.join(logDir, 'app.log');
+        this.ensureLogDir();
+    }
+
+    private ensureLogDir(): void {
+        if (!fs.existsSync(this.logDir)) {
+            fs.mkdirSync(this.logDir, { recursive: true });
         }
-        timeoutId = setTimeout(() => func.apply(this, args), delay);
-    } as T;
-};
+    }
 
-export const throttle = <T extends (...args: any[]) => void>(func: T, limit: number): T => {
-    let lastFunc: NodeJS.Timeout | null;
-    let lastRan: number;
-    return function(this: any, ...args: any[]) {
-        if (!lastRan) {
-            func.apply(this, args);
-            lastRan = Date.now();
-        } else {
-            if (lastFunc) {
-                clearTimeout(lastFunc);
-            }
-            lastFunc = setTimeout(() => {
-                if ((Date.now() - lastRan) >= limit) {
-                    func.apply(this, args);
-                    lastRan = Date.now();
-                }
-            }, limit - (Date.now() - lastRan));
+    public log(message: string): void {
+        this.checkFileSize();
+        const timestamp = new Date().toISOString();
+        fs.appendFileSync(this.logFilePath, `${timestamp} - ${message}\n`);
+    }
+
+    private checkFileSize(): void {
+        const stats = fs.statSync(this.logFilePath);
+        if (stats.size > this.maxFileSize) {
+            this.rotateLogs();
         }
-    } as T;
-};
+    }
+
+    private rotateLogs(): void {
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        const archivedLogPath = path.join(this.logDir, `app-${timestamp}.log`);
+        fs.renameSync(this.logFilePath, archivedLogPath);
+        this.ensureLogDir();
+        fs.writeFileSync(this.logFilePath, '');
+    }
+}
+
+const logger = new Logger('./logs', 1024 * 1024); // 1 MB size limit
+export default logger;
