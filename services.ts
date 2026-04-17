@@ -1,40 +1,40 @@
-type ErrorCallback = (error: Error) => void;
+type Callback = () => void;
 
-class RobloxService {
-    private static instance: RobloxService;
-    private constructor() {}
+type ServiceMap = {
+    [key: string]: { active: boolean; callback: Callback };
+};
 
-    public static getInstance(): RobloxService {
-        if (!RobloxService.instance) {
-            RobloxService.instance = new RobloxService();
-        }
-        return RobloxService.instance;
+class ServiceManager {
+    private services: ServiceMap = {};
+
+    addService(name: string, callback: Callback): void {
+        this.services[name] = { active: true, callback };
     }
 
-    public async fetchUserData(userId: string, onError: ErrorCallback): Promise<any> {
-        try {
-            const response = await this.simulateApiCall(userId);
-            if (!response || !response.data) {
-                throw new Error('No data received');
+    removeService(name: string): void {
+        delete this.services[name];
+    }
+
+    runActiveServices(): void {
+        Object.keys(this.services).forEach(name => {
+            const service = this.services[name];
+            if (service.active) {
+                service.callback();
             }
-            return response.data;
-        } catch (error) {
-            onError(error);
+        });
+    }
+
+    toggleService(name: string): void {
+        if (this.services[name]) {
+            this.services[name].active = !this.services[name].active;
         }
     }
 
-    private async simulateApiCall(userId: string): Promise<{ data?: any }> {
-        // Simulate an API call with random errors
-        if (Math.random() < 0.5) {
-            return {}; // Simulates 'no data' received
-        } else if (Math.random() < 0.5) {
-            throw new Error('Network error'); // Simulates a network error
-        }
-        return { data: { userId, username: 'Player_' + userId } }; // Simulates a successful response
+    resetServices(): void {
+        Object.keys(this.services).forEach(name => {
+            this.services[name].active = false;
+        });
     }
 }
 
-const service = RobloxService.getInstance();
-service.fetchUserData('12345', (error) => {
-    console.error('Error fetching user data:', error.message);
-});
+export const serviceManager = new ServiceManager();
