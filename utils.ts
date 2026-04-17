@@ -1,35 +1,39 @@
-/**
- * Combines two arrays, removing duplicates.
- *
- * @param arr1 - The first array.
- * @param arr2 - The second array.
- * @returns A new array containing unique elements from both input arrays.
- */
-function combineUnique<T>(arr1: T[], arr2: T[]): T[] {
-    const uniqueElements = new Set<T>([...arr1, ...arr2]);
-    return Array.from(uniqueElements);
-}
+type DataPoint = {[key: string]: any};
+
+type FilterFunction = (value: any, key: string) => boolean;
 
 /**
- * Flattens a nested array.
- *
- * @param nestedArray - The array to flatten.
- * @returns A new flattened array.
+ * Filter and map Roblox data using a flexible callback.
+ * @param data - The data collection to be processed.
+ * @param filterFn - Function to filter the data. Must return true for items to keep.
+ * @param mapFn - Function to transform the data items. Must return the new value.
+ * @returns An array of the transformed data items.
  */
-function flattenArray<T>(nestedArray: T[][]): T[] {
-    return nestedArray.reduce<T[]>((acc, val) => acc.concat(val), []);
+function processRobloxData(data: DataPoint[], filterFn: FilterFunction, mapFn: (value: any, key: string) => any): any[] {
+    return data
+        .filter((item, index) => {
+            const keys = Object.keys(item);
+            return keys.some(key => filterFn(item[key], key));
+        })
+        .map((item, index) => {
+            const keys = Object.keys(item);
+            const newItem: DataPoint = {};
+            keys.forEach(key => {
+                newItem[key] = mapFn(item[key], key);
+            });
+            return newItem;
+        });
 }
 
-/**
- * Calculates the factorial of a number.
- *
- * @param num - The number to calculate the factorial for.
- * @returns The factorial of the given number.
- * @throws Error if num is negative.
- */
-function factorial(num: number): number {
-    if (num < 0) throw new Error('Negative numbers do not have factorials.');
-    return num <= 1 ? 1 : num * factorial(num - 1);
-}
+// Sample usage: 
+const sampleData: DataPoint[] = [
+    { name: 'Player1', score: 200 },
+    { name: 'Player2', score: 300 },
+    { name: 'Player3', score: 150 }
+];
 
-export { combineUnique, flattenArray, factorial };
+const results = processRobloxData(sampleData,
+    (value) => value > 200,
+    (value) => ({ transformedScore: value * 2 })
+);
+console.log(results); // Output: [ { transformedScore: 600 } ]
