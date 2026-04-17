@@ -1,11 +1,7 @@
-interface Config {  apiUrl: string;  timeout: number;  debug: boolean;}
+type Config = {  settingA: string;  settingB: number;  enableFeatureX: boolean;};
 
-const defaultConfig: Config = {  apiUrl: 'https://api.roblox.com',  timeout: 5000,  debug: false};
+const defaultConfig: Config = {  settingA: 'defaultA',  settingB: 42,  enableFeatureX: true};
 
-const loadConfig = (): Config => {  const config = JSON.parse(localStorage.getItem('robloxConfig') || 'null');  return { ...defaultConfig, ...config };};
+function loadConfig(userConfig?: Partial<Config>): Config {  return {    ...defaultConfig,    ...userConfig,  };}
 
-const saveConfig = (newConfig: Partial<Config>) => {  const config = loadConfig();  localStorage.setItem('robloxConfig', JSON.stringify({ ...config, ...newConfig }));};
-
-const clearConfig = () => {  localStorage.removeItem('robloxConfig');};
-
-export { loadConfig, saveConfig, clearConfig, Config };
+export { Config, loadConfig };
