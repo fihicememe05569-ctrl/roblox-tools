@@ -1,21 +1,10 @@
-async function fetchWithRetry(url: string, options: RequestInit, retries: number = 3): Promise<Response> {
-    let lastError;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-            return response;
-        } catch (error) {
-            lastError = error;
-            if (attempt < retries) {
-                const backoffTime = Math.pow(2, attempt) * 100;
-                await new Promise(resolve => setTimeout(resolve, backoffTime));
-            }
-        }
-    }
-    throw lastError;
-}
+interface Config {  setting1?: string;  setting2?: number;  setting3?: boolean;}
 
-export { fetchWithRetry };
+const defaultConfig: Config = {  setting1: 'defaultValue',  setting2: 42,  setting3: true};
+
+function loadConfig(customConfig: Partial<Config>): Config {  return { ...defaultConfig, ...customConfig };}
+
+// Usage example:
+const userConfig: Partial<Config> = { setting1: 'customValue' };  
+const finalConfig = loadConfig(userConfig);  
+console.log(finalConfig); // { setting1: 'customValue', setting2: 42, setting3: true }
