@@ -1,40 +1,24 @@
-type Callback = () => void;
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-type ServiceMap = {
-    [key: string]: { active: boolean; callback: Callback };
-};
-
-class ServiceManager {
-    private services: ServiceMap = {};
-
-    addService(name: string, callback: Callback): void {
-        this.services[name] = { active: true, callback };
-    }
-
-    removeService(name: string): void {
-        delete this.services[name];
-    }
-
-    runActiveServices(): void {
-        Object.keys(this.services).forEach(name => {
-            const service = this.services[name];
-            if (service.active) {
-                service.callback();
+async function fetchWithRetry(url: string, options: RequestInit, retries: number = 3, delay: number = 1000): Promise<Response> {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
             }
-        });
-    }
-
-    toggleService(name: string): void {
-        if (this.services[name]) {
-            this.services[name].active = !this.services[name].active;
+            return response;
+        } catch (error) {
+            if (i < retries) {
+                console.warn(`Attempt ${i + 1} failed: ${error.message}. Retrying in ${delay}ms...`);
+                await sleep(delay);
+            } else {
+                throw new Error(`Failed after ${retries + 1} attempts: ${error.message}`);
+            }
         }
-    }
-
-    resetServices(): void {
-        Object.keys(this.services).forEach(name => {
-            this.services[name].active = false;
-        });
     }
 }
 
-export const serviceManager = new ServiceManager();
+export { fetchWithRetry };
