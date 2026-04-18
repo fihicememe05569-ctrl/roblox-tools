@@ -1,39 +1,23 @@
-type DataPoint = {[key: string]: any};
+type RobloxData = { id: number; name: string; value: any; };
 
-type FilterFunction = (value: any, key: string) => boolean;
+type RobloxDataHandler = {
+    filterById: (data: RobloxData[], id: number) => RobloxData[];
+    sortByName: (data: RobloxData[], order?: 'asc' | 'desc') => RobloxData[];
+    transformValues: (data: RobloxData[]) => Array<{ id: number; description: string; }>; 
+};
 
-/**
- * Filter and map Roblox data using a flexible callback.
- * @param data - The data collection to be processed.
- * @param filterFn - Function to filter the data. Must return true for items to keep.
- * @param mapFn - Function to transform the data items. Must return the new value.
- * @returns An array of the transformed data items.
- */
-function processRobloxData(data: DataPoint[], filterFn: FilterFunction, mapFn: (value: any, key: string) => any): any[] {
-    return data
-        .filter((item, index) => {
-            const keys = Object.keys(item);
-            return keys.some(key => filterFn(item[key], key));
-        })
-        .map((item, index) => {
-            const keys = Object.keys(item);
-            const newItem: DataPoint = {};
-            keys.forEach(key => {
-                newItem[key] = mapFn(item[key], key);
-            });
-            return newItem;
+const robloxDataHandler: RobloxDataHandler = {
+    filterById: (data, id) => data.filter(item => item.id === id),
+
+    sortByName: (data, order = 'asc') => {
+        return data.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            return order === 'asc' ? (nameA > nameB ? 1 : -1) : (nameA < nameB ? 1 : -1);
         });
-}
+    },
 
-// Sample usage: 
-const sampleData: DataPoint[] = [
-    { name: 'Player1', score: 200 },
-    { name: 'Player2', score: 300 },
-    { name: 'Player3', score: 150 }
-];
+    transformValues: (data) => data.map(item => ({ id: item.id, description: `${item.name}: ${item.value}` }))
+};
 
-const results = processRobloxData(sampleData,
-    (value) => value > 200,
-    (value) => ({ transformedScore: value * 2 })
-);
-console.log(results); // Output: [ { transformedScore: 600 } ]
+export default robloxDataHandler;
