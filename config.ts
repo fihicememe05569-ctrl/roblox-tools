@@ -1,34 +1,25 @@
-/**
- * Configuration settings for the application.
- * 
- * This file contains constants and settings that can be used throughout the application.
- */
+type Config = { apiUrl: string; timeout: number; retries: number; };
 
-// Default settings interface
-interface DefaultSettings {
-    environment: 'development' | 'production';
-    apiUrl: string;
-    port: number;
-}
-
-/**
- * The default configuration settings for the application.
- * 
- * These settings can be overridden by environment variables.
- */
-const defaultConfig: DefaultSettings = {
-    environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-    apiUrl: process.env.API_URL || 'http://localhost:3000',
-    port: parseInt(process.env.PORT || '3000', 10),
+const defaultConfig: Config = {
+    apiUrl: 'https://api.example.com',
+    timeout: 5000,
+    retries: 3,
 };
 
-/**
- * Function to get the current configuration settings.
- * 
- * @returns {DefaultSettings} - The current application configuration settings.
- */
-function getConfig(): DefaultSettings {
-    return defaultConfig;
-}
+const validateConfig = (config: Partial<Config>): Config => {
+    const validatedConfig: Config = { ...defaultConfig, ...config };
 
-export { getConfig, DefaultSettings };
+    if (typeof validatedConfig.apiUrl !== 'string') {
+        throw new Error('Invalid apiUrl: must be a string');
+    }
+    if (typeof validatedConfig.timeout !== 'number' || validatedConfig.timeout <= 0) {
+        throw new Error('Invalid timeout: must be a positive number');
+    }
+    if (typeof validatedConfig.retries !== 'number' || validatedConfig.retries < 0) {
+        throw new Error('Invalid retries: must be a non-negative number');
+    }
+
+    return validatedConfig;
+};
+
+export { Config, defaultConfig, validateConfig };
