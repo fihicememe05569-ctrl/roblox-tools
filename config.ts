@@ -1,25 +1,28 @@
-type Config = { apiUrl: string; timeout: number; retries: number; };
+import fs from 'fs';
+
+interface Config {
+    port: number;
+    dbUrl: string;
+    debug: boolean;
+}
 
 const defaultConfig: Config = {
-    apiUrl: 'https://api.example.com',
-    timeout: 5000,
-    retries: 3,
+    port: 3000,
+    dbUrl: 'mongodb://localhost:27017/myapp',
+    debug: false,
 };
 
-const validateConfig = (config: Partial<Config>): Config => {
-    const validatedConfig: Config = { ...defaultConfig, ...config };
-
-    if (typeof validatedConfig.apiUrl !== 'string') {
-        throw new Error('Invalid apiUrl: must be a string');
+const loadConfig = (filePath: string): Config => {
+    try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        const userConfig = JSON.parse(data);
+        return { ...defaultConfig, ...userConfig };
+    } catch (error) {
+        console.warn(`Failed to load config: ${error}`);
+        return defaultConfig;
     }
-    if (typeof validatedConfig.timeout !== 'number' || validatedConfig.timeout <= 0) {
-        throw new Error('Invalid timeout: must be a positive number');
-    }
-    if (typeof validatedConfig.retries !== 'number' || validatedConfig.retries < 0) {
-        throw new Error('Invalid retries: must be a non-negative number');
-    }
-
-    return validatedConfig;
 };
 
-export { Config, defaultConfig, validateConfig };
+export const config = loadConfig('./config.json');
+
+export default config;
