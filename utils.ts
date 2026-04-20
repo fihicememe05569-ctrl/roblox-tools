@@ -1,33 +1,23 @@
-export const safeJSONParse = (jsonString: string): any => {
-    try {
-        return JSON.parse(jsonString);
-    } catch (error) {
-        console.error('JSON parsing error:', error);
-        return null;
-    }
-};
+type NetworkOperation = () => Promise<any>;
 
-export const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000): Promise<Response> => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const response = await fetch(url, { ...options, signal: controller.signal });
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 1000; // in milliseconds
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function retryNetworkOperation(operation: NetworkOperation): Promise<any> {
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+        try {
+            const result = await operation();
+            return result;
+        } catch (error) {
+            attempt++;
+            if (attempt === MAX_RETRIES) {
+                throw new Error(`Operation failed after ${MAX_RETRIES} attempts: ${error}`);
+            }
+            console.log(`Attempt ${attempt} failed. Retrying in ${RETRY_DELAY}ms...`);
+            await sleep(RETRY_DELAY);
         }
-        return response;
-    } catch (error) {
-        console.error('Fetch error:', error);
-        return null;
-    } finally {
-        clearTimeout(id);
     }
-};
-
-export const validateUserData = (userData: { username: string; age: number }): boolean => {
-    if (typeof userData.username !== 'string' || typeof userData.age !== 'number') {
-        console.error('Invalid user data:', userData);
-        return false;
-    }
-    return userData.age > 0;
-};
+}
