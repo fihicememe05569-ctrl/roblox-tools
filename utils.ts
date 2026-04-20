@@ -1,33 +1,36 @@
-/**
- * Generates a random integer between min and max (inclusive).
- * @param min - The minimum number in the range.
- * @param max - The maximum number in the range.
- * @returns A random integer between min and max.
- */
-function getRandomInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+export interface RobloxUser { id: number; username: string; avatarUrl: string; }
+
+export function fetchRobloxUser(userId: number): Promise<RobloxUser> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `https://users.roblox.com/v1/users/${userId}`);
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                resolve({
+                    id: data.id,
+                    username: data.name,
+                    avatarUrl: `https://www.roblox.com/bust-thumbnail/image?userId=${data.id}&width=420&height=420&format=png`
+                });
+            } else {
+                reject(new Error(`Failed to fetch user with id ${userId}`));
+            }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send();
+    });
 }
 
-/**
- * Shuffles an array in place using the Fisher-Yates algorithm.
- * @param array - The array to shuffle.
- * @returns The shuffled array.
- */
-function shuffleArray<T>(array: T[]): T[] {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = getRandomInt(0, i);
-        [array[i], array[j]] = [array[j], array[i]];  // Swap elements
+export function formatUserDetails(user: RobloxUser): string {
+    return `User: ${user.username} (ID: ${user.id})\nAvatar: ${user.avatarUrl}`;
+}
+
+export async function logRobloxUserDetails(userId: number): Promise<void> {
+    try {
+        const user = await fetchRobloxUser(userId);
+        const details = formatUserDetails(user);
+        console.log(details);
+    } catch (error) {
+        console.error(error);
     }
-    return array;
 }
-
-/**
- * Pauses execution for a given number of milliseconds.
- * @param milliseconds - The time to wait in milliseconds.
- * @returns A promise that resolves after the timeout.
- */
-function delay(milliseconds: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
-export { getRandomInt, shuffleArray, delay };
