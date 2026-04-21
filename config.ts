@@ -1,28 +1,45 @@
-import fs from 'fs';
+/**
+ * Configuration settings for the Roblox tools.
+ * This file contains all necessary configurations required to set up the tools properly.
+ */
 
 interface Config {
-    port: number;
-    dbUrl: string;
-    debug: boolean;
+    /** The API endpoint for fetching user data */
+    apiEndpoint: string;
+    /** The timeout duration for API requests in milliseconds */
+    apiTimeout: number;
+    /** A flag indicating if debug mode is enabled */
+    debugMode: boolean;
 }
 
 const defaultConfig: Config = {
-    port: 3000,
-    dbUrl: 'mongodb://localhost:27017/myapp',
-    debug: false,
+    apiEndpoint: 'https://api.roblox.com',
+    apiTimeout: 5000,
+    debugMode: false
 };
 
-const loadConfig = (filePath: string): Config => {
-    try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        const userConfig = JSON.parse(data);
-        return { ...defaultConfig, ...userConfig };
-    } catch (error) {
-        console.warn(`Failed to load config: ${error}`);
-        return defaultConfig;
-    }
-};
+/**
+ * Retrieves the configuration settings.
+ * @returns {Config} The current configuration settings.
+ */
+function getConfig(): Config {
+    return defaultConfig;
+}
 
-export const config = loadConfig('./config.json');
+/**
+ * Updates the API endpoint in the configuration.
+ * @param newEndpoint The new API endpoint to set.
+ */
+function updateApiEndpoint(newEndpoint: string): void {
+    defaultConfig.apiEndpoint = newEndpoint;
+}
 
-export default config;
+/**
+ * Enables or disables debug mode.
+ * @param isEnabled A boolean indicating if debug mode should be enabled.
+ */
+function setDebugMode(isEnabled: boolean): void {
+    defaultConfig.debugMode = isEnabled;
+}
+
+export { getConfig, updateApiEndpoint, setDebugMode, Config };
