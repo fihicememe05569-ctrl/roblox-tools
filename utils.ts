@@ -1,36 +1,34 @@
-export interface RobloxUser { id: number; username: string; avatarUrl: string; }
+export function memoize<T extends (...args: any[]) => any>(fn: T): T {
+    const cache: Map<string, ReturnType<T>> = new Map();
 
-export function fetchRobloxUser(userId: number): Promise<RobloxUser> {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', `https://users.roblox.com/v1/users/${userId}`);
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                const data = JSON.parse(xhr.responseText);
-                resolve({
-                    id: data.id,
-                    username: data.name,
-                    avatarUrl: `https://www.roblox.com/bust-thumbnail/image?userId=${data.id}&width=420&height=420&format=png`
-                });
-            } else {
-                reject(new Error(`Failed to fetch user with id ${userId}`));
-            }
-        };
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send();
-    });
+    return function (...args: any[]): ReturnType<T> {
+        const key = JSON.stringify(args);
+        if (cache.has(key)) {
+            return cache.get(key)!;
+        }
+        const result = fn(...args);
+        cache.set(key, result);
+        return result;
+    } as T;
 }
 
-export function formatUserDetails(user: RobloxUser): string {
-    return `User: ${user.username} (ID: ${user.id})\nAvatar: ${user.avatarUrl}`;
-}
+export function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T {
+    let lastFunc: ReturnType<typeof setTimeout>;
+    let lastRan: number;
 
-export async function logRobloxUserDetails(userId: number): Promise<void> {
-    try {
-        const user = await fetchRobloxUser(userId);
-        const details = formatUserDetails(user);
-        console.log(details);
-    } catch (error) {
-        console.error(error);
-    }
+    return function (...args: any[]) {
+        const context = this;
+        if (!lastRan) {
+            func.apply(context, args);
+            lastRan = Date.now();
+        } else {
+            clearTimeout(lastFunc);
+            lastFunc = setTimeout(function () {
+                if (Date.now() - lastRan >= limit) {
+                    func.apply(context, args);
+                    lastRan = Date.now();
+                }
+            }, limit - (Date.now() - lastRan));
+        }
+    } as T;
 }
