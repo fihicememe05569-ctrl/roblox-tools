@@ -1,34 +1,24 @@
-export function memoize<T extends (...args: any[]) => any>(fn: T): T {
-    const cache: Map<string, ReturnType<T>> = new Map();
-
-    return function (...args: any[]): ReturnType<T> {
-        const key = JSON.stringify(args);
-        if (cache.has(key)) {
-            return cache.get(key)!;
-        }
-        const result = fn(...args);
-        cache.set(key, result);
-        return result;
-    } as T;
+export function validateInput(input: unknown): boolean {
+    if (typeof input !== 'object' || input === null) {
+        return false;
+    }
+    const { username, age } = input as { username: unknown; age: unknown; };
+    if (typeof username !== 'string' || username.length < 3) {
+        return false;
+    }
+    if (typeof age !== 'number' || age < 13 || age > 120) {
+        return false;
+    }
+    return true;
 }
 
-export function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T {
-    let lastFunc: ReturnType<typeof setTimeout>;
-    let lastRan: number;
-
-    return function (...args: any[]) {
-        const context = this;
-        if (!lastRan) {
-            func.apply(context, args);
-            lastRan = Date.now();
-        } else {
-            clearTimeout(lastFunc);
-            lastFunc = setTimeout(function () {
-                if (Date.now() - lastRan >= limit) {
-                    func.apply(context, args);
-                    lastRan = Date.now();
-                }
-            }, limit - (Date.now() - lastRan));
+export function processInput(inputs: unknown[]): void {
+    for (const input of inputs) {
+        if (!validateInput(input)) {
+            console.warn('Invalid input detected:', input);
+            continue;
         }
-    } as T;
+        const { username, age } = input as { username: string; age: number; };
+        console.log(`Processing user: ${username}, Age: ${age}`);
+    }
 }
