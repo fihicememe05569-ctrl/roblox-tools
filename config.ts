@@ -1,20 +1,31 @@
-interface Config {
+export interface Config {
     apiUrl: string;
-    retryAttempts: number;
     timeout: number;
+    retryAttempts: number;
 }
 
 const defaultConfig: Config = {
-    apiUrl: 'https://api.example.com',
+    apiUrl: 'https://api.roblox.com',
+    timeout: 5000,
     retryAttempts: 3,
-    timeout: 5000
 };
 
-function loadConfig(customConfig?: Partial<Config>): Config {
-    return {...defaultConfig, ...customConfig};
+const environmentConfig: Partial<Config> = {
+    apiUrl: process.env.API_URL,
+    timeout: Number(process.env.TIMEOUT),
+};
+
+export function getConfig(): Config {
+    return {
+        ...defaultConfig,
+        ...environmentConfig,
+        retryAttempts: environmentConfig.retryAttempts || defaultConfig.retryAttempts,
+    };
 }
 
-const config = loadConfig();
+export function printConfig(config: Config): void {
+    console.log('Current Config:', JSON.stringify(config, null, 2));
+}
 
-export default config;
-export { loadConfig, Config };
+export const config = getConfig();
+printConfig(config);
