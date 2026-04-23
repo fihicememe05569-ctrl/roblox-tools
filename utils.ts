@@ -1,29 +1,33 @@
-type RobloxData = {[key: string]: any};
-
-function formatRobloxData(data: RobloxData, mappings: {[key: string]: string}): RobloxData {
-    const formattedData: RobloxData = {};
-    for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-            const newKey = mappings[key] || key;
-            formattedData[newKey] = data[key];
-        }
+export function safeGet<T>(obj: Record<string, any>, key: string): T | null {
+    try {
+        if (obj == null) throw new Error(`Object is null or undefined`);
+        if (!(key in obj)) throw new Error(`Key '${key}' does not exist in object`);
+        const value = obj[key];
+        if (value == null) throw new Error(`Value for key '${key}' is null or undefined`);
+        return value;
+    } catch (error) {
+        console.error(`Error in safeGet: ${error.message}`);
+        return null;
     }
-    return formattedData;
 }
 
-function filterRobloxData(data: RobloxData, predicate: (value: any, key: string) => boolean): RobloxData {
-    return Object.keys(data)
-        .filter(key => predicate(data[key], key))
-        .reduce((obj, key) => {
-            obj[key] = data[key];
-            return obj;
-        }, {} as RobloxData);
+export function parseJSON<T>(jsonString: string): T | null {
+    try {
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error(`Error parsing JSON: ${error.message}`);
+        return null;
+    }
 }
 
-function mergeRobloxData(...dataArray: RobloxData[]): RobloxData {
-    return dataArray.reduce((merged, current) => {
-        return {...merged, ...current};
-    }, {} as RobloxData);
+export function validateNumberRange(value: number, min: number, max: number): boolean {
+    if (typeof value !== 'number') {
+        console.error('Value must be a number');
+        return false;
+    }
+    if (value < min || value > max) {
+        console.error(`Value ${value} is out of range (${min}-${max})`);
+        return false;
+    }
+    return true;
 }
-
-export { formatRobloxData, filterRobloxData, mergeRobloxData };
