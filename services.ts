@@ -1,33 +1,27 @@
 import { User } from './types';
 
-export class UserService {
+class UserService {
     private users: User[] = [];
 
-    addUser(user: User): void {
-        this.users.push(user);
-        console.log(`User ${user.name} added.`);
+    public addUser(user: User): void {
+        if (this.isUserValid(user)) {
+            this.users.push(user);
+        } else {
+            throw new Error('Invalid user data');
+        }
     }
 
-    getUserById(userId: string): User | undefined {
-        return this.users.find(user => user.id === userId);
+    public getUser(id: string): User {
+        const user = this.users.find(u => u.id === id);
+        if (!user) {
+            throw new Error(`User not found with id: ${id}`);
+        }
+        return user;
     }
 
-    removeUser(userId: string): void {
-        this.users = this.users.filter(user => user.id !== userId);
-        console.log(`User with id ${userId} removed.`);
-    }
-
-    listUsers(): User[] {
-        console.log('Listing users...');
-        return this.users;
-    }
-
-    clearUsers(): void {
-        this.users = [];
-        console.log('All users cleared from service.');
+    private isUserValid(user: User): boolean {
+        return user && typeof user.id === 'string' && typeof user.name === 'string';
     }
 }
 
-const userService = new UserService();
-
-export default userService;
+export default new UserService();
