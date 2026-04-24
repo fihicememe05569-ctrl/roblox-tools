@@ -1,27 +1,34 @@
-import { User } from './types';
+// Function to simulate a network operation
+async function networkOperation(): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const success = Math.random() > 0.5;
+        setTimeout(() => {
+            success ? resolve('Network operation succeeded!') : reject(new Error('Network operation failed!'));
+        }, 1000);
+    });
+}
 
-class UserService {
-    private users: User[] = [];
-
-    public addUser(user: User): void {
-        if (this.isUserValid(user)) {
-            this.users.push(user);
-        } else {
-            throw new Error('Invalid user data');
+// Retry Logic for Network Operations
+async function retry<T>(fn: () => Promise<T>, attempts: number, delay: number): Promise<T> {
+    for (let i = 0; i < attempts; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (i === attempts - 1) throw error;
+            await new Promise(res => setTimeout(res, delay));
         }
     }
+    throw new Error('Max retries reached');
+}
 
-    public getUser(id: string): User {
-        const user = this.users.find(u => u.id === id);
-        if (!user) {
-            throw new Error(`User not found with id: ${id}`);
-        }
-        return user;
-    }
-
-    private isUserValid(user: User): boolean {
-        return user && typeof user.id === 'string' && typeof user.name === 'string';
+// Example usage
+async function performNetworkTask() {
+    try {
+        const result = await retry(networkOperation, 3, 2000);
+        console.log(result);
+    } catch (error) {
+        console.error(error);
     }
 }
 
-export default new UserService();
+performNetworkTask();
