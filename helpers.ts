@@ -1,25 +1,37 @@
-type Vector3Like = { x: number; y: number; z: number; };
-
-type Color3Like = { r: number; g: number; b: number; };
-
-function isVector3(obj: any): obj is Vector3Like {
-    return obj && typeof obj.x === 'number' && typeof obj.y === 'number' && typeof obj.z === 'number';
+/**
+ * Calculates the distance between two points on the Roblox game world.
+ *
+ * @param pointA - The first point as a Vector3.
+ * @param pointB - The second point as a Vector3.
+ * @returns The distance as a number.
+ */
+function calculateDistance(pointA: Vector3, pointB: Vector3): number {
+    return (pointB.sub(pointA)).magnitude;
 }
 
-function isColor3(obj: any): obj is Color3Like {
-    return obj && typeof obj.r === 'number' && typeof obj.g === 'number' && typeof obj.b === 'number';
+/**
+ * Checks if a player has a specific tool in their backpack.
+ *
+ * @param player - The player to check the inventory of.
+ * @param toolName - The name of the tool to look for.
+ * @returns True if the tool is found, otherwise false.
+ */
+function hasTool(player: Player, toolName: string): boolean {
+    return player.Backpack.GetChildren().some((tool) => tool.Name === toolName);
 }
 
-function lerp(start: number, end: number, delta: number): number {
-    return start + (end - start) * delta;
+/**
+ * Generates a random spawn position within specified boundaries.
+ *
+ * @param min - The minimum boundary as a Vector3.
+ * @param max - The maximum boundary as a Vector3.
+ * @returns A random Vector3 within the bounds.
+ */
+function getRandomSpawnPosition(min: Vector3, max: Vector3): Vector3 {
+    const x = math.random(min.X, max.X);
+    const y = math.random(min.Y, max.Y);
+    const z = math.random(min.Z, max.Z);
+    return new Vector3(x, y, z);
 }
 
-function formatColor(color: Color3Like): string {
-    return `rgb(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)})`;
-}
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
-}
-
-export { isVector3, isColor3, lerp, formatColor, clamp };
+export { calculateDistance, hasTool, getRandomSpawnPosition };
