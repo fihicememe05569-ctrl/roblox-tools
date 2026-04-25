@@ -1,34 +1,34 @@
-// Function to simulate a network operation
-async function networkOperation(): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const success = Math.random() > 0.5;
-        setTimeout(() => {
-            success ? resolve('Network operation succeeded!') : reject(new Error('Network operation failed!'));
-        }, 1000);
-    });
-}
+type NetworkOperation = () => Promise<any>;
 
-// Retry Logic for Network Operations
-async function retry<T>(fn: () => Promise<T>, attempts: number, delay: number): Promise<T> {
-    for (let i = 0; i < attempts; i++) {
+type RetryOptions = {
+    retries?: number;
+    delay?: number;
+};
+
+const defaultRetryOptions: RetryOptions = {
+    retries: 3,
+    delay: 1000,
+};
+
+async function retry<T>(operation: NetworkOperation, options?: RetryOptions): Promise<T> {
+    const { retries, delay } = { ...defaultRetryOptions, ...options };
+    let attempts = 0;
+
+    while (attempts < retries!) {
         try {
-            return await fn();
+            return await operation();
         } catch (error) {
-            if (i === attempts - 1) throw error;
-            await new Promise(res => setTimeout(res, delay));
+            attempts++;
+            if (attempts < retries!) {
+                console.warn(`Attempt ${attempts} failed: ${error}. Retrying in ${delay}ms...`);
+                await new Promise(res => setTimeout(res, delay));
+            } else {
+                console.error(`Operation failed after ${attempts} attempts:`, error);
+                throw error;
+            }
         }
     }
     throw new Error('Max retries reached');
 }
 
-// Example usage
-async function performNetworkTask() {
-    try {
-        const result = await retry(networkOperation, 3, 2000);
-        console.log(result);
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-performNetworkTask();
+export { retry };
