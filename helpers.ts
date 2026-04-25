@@ -1,29 +1,35 @@
-type NetworkOperation<T> = () => Promise<T>;
+// Helper functions for common Roblox operations
 
-type RetryOptions = {
-    retries?: number;
-    delay?: number;
-};
-
-async function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+// Function to check if a player is part of a specified group
+export function isPlayerInGroup(player: Player, groupId: number): boolean {
+    return player.IsInGroup(groupId);
 }
 
-async function retry<T>(operation: NetworkOperation<T>, options: RetryOptions = {}): Promise<T> {
-    const { retries = 3, delay = 1000 } = options;
-    let lastError;
-
-    for (let attempt = 0; attempt < retries; attempt++) {
-        try {
-            return await operation();
-        } catch (error) {
-            lastError = error;
-            if (attempt < retries - 1) {
-                await sleep(delay);
-            }
-        }
-    }
-    throw lastError;
+// Function to get a player's avatar username by UserId
+export async function getUsernameFromUserId(userId: number): Promise<string> {
+    const response = await fetch(`https://api.roblox.com/users/${userId}`);
+    const data = await response.json();
+    return data.Username;
 }
 
-export { retry, NetworkOperation, RetryOptions };
+// Function to teleport a player to a specific location
+export function teleportPlayer(player: Player, position: Vector3): void {
+    player.Character?.SetPrimaryPartCFrame(CFrame.new(position));
+}
+
+// Function to create a new part in the workspace
+export function createPart(size: Vector3, color: Color3, position: Vector3): Part {
+    const part = Instance.new('Part');
+    part.Size = size;
+    part.Color = color;
+    part.Position = position;
+    part.Anchored = true;
+    part.Parent = workspace;
+    return part;
+}
+
+// Function to set visibility of an object
+export function setObjectVisibility(object: Instance, isVisible: boolean): void {
+    object.Transparency = isVisible ? 1 : 0;
+    object.CanCollide = !isVisible;
+}
