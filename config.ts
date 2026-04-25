@@ -1,31 +1,23 @@
-export interface Config {
-    apiUrl: string;
-    timeout: number;
-    retryAttempts: number;
+export const MAX_RETRIES = 3;
+export const RETRY_DELAY_MS = 1000;
+
+export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let attempts = 0;
+    while (attempts < MAX_RETRIES) {
+        try {
+            return await fn();
+        } catch (error) {
+            attempts++;
+            if (attempts >= MAX_RETRIES) {
+                throw new Error(`Failed after ${MAX_RETRIES} attempts: ${error}`);
+            }
+            console.warn(`Attempt ${attempts} failed. Retrying in ${RETRY_DELAY_MS}ms...`);
+            await delay(RETRY_DELAY_MS);
+        }
+    }
+    throw new Error('This should never be reached.');
 }
 
-const defaultConfig: Config = {
-    apiUrl: 'https://api.roblox.com',
-    timeout: 5000,
-    retryAttempts: 3,
-};
-
-const environmentConfig: Partial<Config> = {
-    apiUrl: process.env.API_URL,
-    timeout: Number(process.env.TIMEOUT),
-};
-
-export function getConfig(): Config {
-    return {
-        ...defaultConfig,
-        ...environmentConfig,
-        retryAttempts: environmentConfig.retryAttempts || defaultConfig.retryAttempts,
-    };
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-export function printConfig(config: Config): void {
-    console.log('Current Config:', JSON.stringify(config, null, 2));
-}
-
-export const config = getConfig();
-printConfig(config);
