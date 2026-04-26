@@ -1,54 +1,25 @@
-export const safeParseJSON = (jsonString: string): any => {
-    try {
-        return JSON.parse(jsonString);
-    } catch (e) {
-        console.error('Invalid JSON provided:', e);
-        return null;
-    }
-};
+export interface RobloxData<T> {
+    id: number;
+    name: string;
+    attributes: T;
+}
 
-export const assertNonNull = <T>(value: T | null | undefined, message: string): T => {
-    if (value == null) {
-        throw new Error(message);
-    }
-    return value;
-};
+export function filterRobloxData<T>(data: RobloxData<T>[], predicate: (item: RobloxData<T>) => boolean): RobloxData<T>[] {
+    return data.filter(predicate);
+}
 
-export const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = 5000): Promise<Response> => {
-    const controller = new AbortController();
-    const { signal } = controller;
+export function sortRobloxData<T>(data: RobloxData<T>[], key: keyof T, ascending: boolean = true): RobloxData<T>[] {
+    return data.sort((a, b) => {
+        const valueA = a.attributes[key];
+        const valueB = b.attributes[key];
+        return ascending ? (valueA > valueB ? 1 : -1) : (valueA < valueB ? 1 : -1);
+    });
+}
 
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+export function convertRobloxDataToJSON<T>(data: RobloxData<T>[]): string {
+    return JSON.stringify(data, null, 2);
+}
 
-    try {
-        const response = await fetch(url, { ...options, signal });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response;
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.error('Fetch request timed out');
-        } else {
-            console.error('Fetch error:', error);
-        }
-        throw error;
-    } finally {
-        clearTimeout(timeoutId);
-    }
-};
-
-export const retryOperation = async <T>(operation: () => Promise<T>, retries: number = 3): Promise<T> => {
-    for (let i = 0; i < retries; i++) {
-        try {
-            return await operation();
-        } catch (error) {
-            if (i === retries - 1) {
-                console.error('Operation failed after retries:', error);
-                throw error;
-            }
-            console.warn('Operation failed, retrying...', error);
-        }
-    }
-    throw new Error('Unreachable code');
-};
+export function parseRobloxDataFromJSON<T>(jsonString: string): RobloxData<T>[] {
+    return JSON.parse(jsonString) as RobloxData<T>[];
+}
