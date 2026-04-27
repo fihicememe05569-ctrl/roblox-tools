@@ -1,1 +1,44 @@
-type RobloxData = { [key: string]: any };\n\n/**\n * Deep merge two Roblox data objects.\n * @param target The target object to merge into.\n * @param source The source object to merge from.\n * @returns The merged object.\n */\nfunction deepMerge(target: RobloxData, source: RobloxData): RobloxData {\n    const output = { ...target };\n    for (const key in source) {\n        if (source.hasOwnProperty(key)) {\n            if (typeof source[key] === 'object' && source[key] !== null) {\n                output[key] = deepMerge(target[key] || {}, source[key]);\n            } else {\n                output[key] = source[key];\n            }\n        }\n    }\n    return output;\n}\n\n/**\n * Normalize Roblox data by removing null values.\n * @param data The Roblox data object to normalize.\n * @returns The normalized object without nulls.\n */\nfunction normalizeRobloxData(data: RobloxData): RobloxData {\n    return Object.keys(data).reduce((acc, key) => {\n        if (data[key] !== null) {\n            acc[key] = data[key];\n        }\n        return acc;\n    }, {} as RobloxData);\n}\n\nexport { deepMerge, normalizeRobloxData };
+export function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+    let timeoutId: NodeJS.Timeout | null = null;
+    return function (...args: Parameters<T>): void {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            func(...args);
+        }, delay);
+    };
+}
+
+export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void {
+    let lastFunc: NodeJS.Timeout | null;
+    let lastRan: number = 0;
+    return function (...args: Parameters<T>): void {
+        const context = this;
+        if (!lastRan) {
+            func.apply(context, args);
+            lastRan = Date.now();
+        } else {
+            if (Date.now() - lastRan >= limit) {
+                if (lastFunc) {
+                    clearTimeout(lastFunc);
+                }
+                func.apply(context, args);
+                lastRan = Date.now();
+            } else {
+                lastFunc = setTimeout(function () {
+                    func.apply(context, args);
+                }, limit - (Date.now() - lastRan));
+            }
+        }
+    };
+}
+
+export function randomElement<T>(array: T[]): T {
+    const index = Math.floor(Math.random() * array.length);
+    return array[index];
+}
+
+export function uniqueArray<T>(array: T[]): T[] {
+    return Array.from(new Set(array));
+}
