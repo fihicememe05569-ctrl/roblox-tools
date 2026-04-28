@@ -1,28 +1,32 @@
-export async function retry<T>(operation: () => Promise<T>, retries: number = 3, delay: number = 1000): Promise<T> {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            return await operation();
-        } catch (error) {
-            if (attempt === retries) {
-                throw error;
-            }
-            console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
-            await new Promise(res => setTimeout(res, delay));
-            delay *= 2; // Exponential backoff
+export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
+    let timeoutId: NodeJS.Timeout | null = null;
+    return function(this: any, ...args: any[]) {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
         }
-    }
-    throw new Error('Should never reach here');
-} 
-
-// Example use case:
-async function fetchData() {
-    const response = await fetch('https://api.example.com/data');
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
-    return response.json();
+        timeoutId = setTimeout(() => { fn.apply(this, args); }, delay);
+    } as T;
 }
 
-export async function getDataWithRetry() {
-    return retry(fetchData);
+export function throttle<T extends (...args: any[]) => void>(fn: T, limit: number): T {
+    let lastCall: number | null = null;
+    return function(this: any, ...args: any[]) {
+        const now = Date.now();
+        if (lastCall === null || (now - lastCall) >= limit) {
+            lastCall = now;
+            fn.apply(this, args);
+        }
+    } as T;
+}
+
+export function randomInRange(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
+}
+
+export function deepClone<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
 }
