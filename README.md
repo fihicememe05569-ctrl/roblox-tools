@@ -1,53 +1,47 @@
 # Roblox Tools
 
-Roblox Tools is a TypeScript library designed to enhance the development experience for Roblox developers. It provides a set of utilities and features that streamline common tasks, making it easier to build scalable and maintainable games on the Roblox platform.
+Roblox Tools is a powerful TypeScript library designed to simplify the development of Roblox games. With an intuitive API and a collection of utility functions, it enhances your game development experience and accelerates your workflow.
 
 ## Features
 
-- **Asset Management**: Easily manage your Roblox assets by automating tasks like importing and exporting models and images.
-- **Event System**: A robust event handling system that facilitates communication between different parts of your game, improving modularity and maintainability.
-- **Data Persistence**: Simplify player data management with built-in methods for saving and loading player data seamlessly between sessions.
-- **Type Safety**: Fully documented TypeScript definitions ensure that you benefit from robust type-checking, catching errors before they occur during runtime.
+- **Player Management**: Easily manage player data, including stats and inventory, to create engaging gameplay.
+- **Event Handling**: Simplify event listening and triggering with built-in event handling functions, promoting better code organization.
+- **Data Persistence**: Efficiently save and load player data using Roblox’s DataStore service, ensuring a seamless experience for players.
+- **Modular Architecture**: Leverage a modular design that allows for easy integration of new features and scalability for larger projects.
 
 ## Installation
 
 To get started with Roblox Tools, clone the repository and install the dependencies using npm:
 
 ```bash
-git clone https://github.com/YourUsername/roblox-tools.git
+git clone https://github.com/Developer/roblox-tools.git
 cd roblox-tools
 npm install
 ```
 
 ## Basic Usage
 
-Here’s a quick example to demonstrate how to utilize the features provided by Roblox Tools:
+Here’s a simple example to get you started with player data management in your Roblox game:
 
 ```typescript
-import { AssetManager, EventSystem, PlayerData } from 'roblox-tools';
+import { PlayerManager } from './src/PlayerManager';
 
-// Initialize Asset Manager
-const assetManager = new AssetManager();
-assetManager.importAsset('path/to/model.rbx');
+// Create a new instance of PlayerManager
+const playerManager = new PlayerManager();
 
-// Setup an event
-const eventSystem = new EventSystem();
-eventSystem.on('playerJoined', (player) => {
-    console.log(`${player.Name} has joined the game!`);
-});
+// Add a new player
+const player = playerManager.addPlayer('Player1');
 
-// Manage Player Data
-const playerData = new PlayerData();
-playerData.save('PlayerID', { score: 100 });
-const data = playerData.load('PlayerID');
-console.log(data); // { score: 100 }
+// Set player data
+player.setStat('score', 100);
+
+// Fetch player data
+console.log(`Player ${player.name} has a score of ${player.getStat('score')}`);
 ```
+
+Roblox Tools provides the foundation you need to create engaging and dynamic Roblox experiences with ease. For more advanced usage and detailed documentation, please check the [Wiki](https://github.com/Developer/roblox-tools/wiki).
 
 ## License
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)  
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Feel free to explore, contribute, or reach out if you have any questions! Happy coding!
+![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)  
+Roblox Tools is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
