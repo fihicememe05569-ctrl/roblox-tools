@@ -1,30 +1,47 @@
-export class RobloxService {
-    private static apiUrl = 'https://api.roblox.com';
+export class ServiceError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ServiceError';
+    }
+}
 
-    public static async fetchData(endpoint: string): Promise<any> {
+export class Service {
+    private serviceData: any;
+
+    constructor(data: any) {
+        this.serviceData = data;
+    }
+
+    public async fetchData(url: string): Promise<any> {
         try {
-            const response = await fetch(`${this.apiUrl}/${endpoint}`);
+            const response = await fetch(url);
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                throw new ServiceError(`Network response was not ok: ${response.statusText}`);
             }
             return await response.json();
         } catch (error) {
-            console.error('Fetch error:', error);
-            return { error: error.message };
+            if (error instanceof ServiceError) {
+                console.error('ServiceError:', error.message);
+            } else if (error instanceof TypeError) {
+                console.error('TypeError: Check your URL or network connection.', error);
+            } else {
+                console.error('Unexpected error:', error);
+            }
+            throw error; // Re-throwing error for further handling
         }
     }
 
-    public static async getPlayerData(playerId: string): Promise<any> {
-        if (!playerId || typeof playerId !== 'string') {
-            return { error: 'Invalid player ID' };
+    public async processData(url: string): Promise<void> {
+        try {
+            const data = await this.fetchData(url);
+            this.handleData(data);
+        } catch (error) {
+            console.error('Failed to process data:', error);
         }
-        return this.fetchData(`players/${playerId}`);
     }
 
-    public static async getGameData(gameId: string): Promise<any> { 
-        if (!gameId || typeof gameId !== 'string') {
-            return { error: 'Invalid game ID' };
-        }
-        return this.fetchData(`games/${gameId}`);
+    private handleData(data: any): void {
+        // Assume some processing here
+        console.log('Data processed:', data);
     }
 }
