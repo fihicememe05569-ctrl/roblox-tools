@@ -1,38 +1,57 @@
-import * as fs from 'fs';
-import * as path from 'path';
+// Service to manage player sessions in Roblox
 
-class Logger {
-    private logDir: string;
-    private logFile: string;
-    private maxFileSize: number;
+interface PlayerSession {
+    playerId: string;
+    sessionId: string;
+    startTime: Date;
+    endTime?: Date;
+}
 
-    constructor(logDir: string, logFile: string, maxFileSize: number = 5 * 1024 * 1024) {
-        this.logDir = logDir;
-        this.logFile = path.join(logDir, logFile);
-        this.maxFileSize = maxFileSize;
-        this.checkLogDir();
+class SessionManager {
+    private sessions: Map<string, PlayerSession> = new Map();
+
+    /**
+     * Starts a new session for a player.
+     * @param playerId - Unique identifier for the player.
+     * @returns The created PlayerSession object.
+     */
+    startSession(playerId: string): PlayerSession {
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        const session: PlayerSession = {
+            playerId,
+            sessionId,
+            startTime: new Date(),
+        };
+        this.sessions.set(sessionId, session);
+        return session;
     }
 
-    private checkLogDir() {
-        if (!fs.existsSync(this.logDir)) {
-            fs.mkdirSync(this.logDir, { recursive: true });
+    /**
+     * Ends a session for a player.
+     * @param sessionId - Unique identifier for the session.
+     * @returns The ended PlayerSession object, or undefined if not found.
+     */
+    endSession(sessionId: string): PlayerSession | undefined {
+        const session = this.sessions.get(sessionId);
+        if (session) {
+            session.endTime = new Date();
+            this.sessions.delete(sessionId);
         }
+        return session;
     }
 
-    public log(message: string) {
-        const logMessage = `${new Date().toISOString()} - ${message}\n`;
-        this.rotateLogs();
-        fs.appendFileSync(this.logFile, logMessage);
-    }
-
-    private rotateLogs() {
-        const stats = fs.statSync(this.logFile);
-        if (stats.size >= this.maxFileSize) {
-            const newLogFile = `${this.logFile}.${new Date().toISOString().split('T')[0]}`;
-            fs.renameSync(this.logFile, newLogFile);
-        }
+    /**
+     * Retrieves all active sessions.
+     * @returns An array of PlayerSession objects.
+     */
+    getActiveSessions(): PlayerSession[] {
+        return Array.from(this.sessions.values()).filter(session => !session.endTime);
     }
 }
 
-const logger = new Logger('./logs', 'app.log');
-export default logger;
+// Example usage
+const sessionManager = new SessionManager();
+const session = sessionManager.startSession('player123');
+console.log(sessionManager.getActiveSessions());
+sessionManager.endSession(session.sessionId);
+console.log(sessionManager.getActiveSessions());
