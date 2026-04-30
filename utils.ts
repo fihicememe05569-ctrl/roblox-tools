@@ -1,1 +1,16 @@
-type NetworkOperation = () => Promise<any>;\n\nasync function retryNetworkOperation(operation: NetworkOperation, retries: number, delay: number): Promise<any> {\n    for (let attempt = 0; attempt < retries; attempt++) {\n        try {\n            return await operation();\n        } catch (error) {\n            if (attempt < retries - 1) {\n                console.warn(`Attempt ${attempt + 1} failed: ${error}. Retrying in ${delay}ms...`);\n                await new Promise(res => setTimeout(res, delay));\n            } else {\n                console.error(`All ${retries} attempts failed.`);\n                throw error;\n            }\n        }\n    }\n}\n\n// Example usage\nasync function fetchData() {\n    const response = await retryNetworkOperation(async () => {\n        const res = await fetch('https://api.example.com/data');\n        if (!res.ok) throw new Error('Network response was not ok');\n        return res.json();\n    }, 3, 1000);\n    console.log(response);\n}\n\nfetchData();
+export async function retry<T>(fn: () => Promise<T>, retries: number = 3, delay: number = 1000): Promise<T> {
+    for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (attempt < retries - 1) {
+                console.warn(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`, error);
+                await new Promise(res => setTimeout(res, delay));
+            } else {
+                console.error(`All ${retries} attempts failed.`);
+                throw error;
+            }
+        }
+    }
+    throw new Error('Maximum retries reached.');
+}
