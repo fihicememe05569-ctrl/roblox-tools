@@ -1,57 +1,35 @@
-// Service to manage player sessions in Roblox
+type PlayerStats = {
+    health: number;
+    mana: number;
+    experience: number;
+};
 
-interface PlayerSession {
-    playerId: string;
-    sessionId: string;
-    startTime: Date;
-    endTime?: Date;
+function initializePlayerStats(): PlayerStats {
+    return { health: 100, mana: 50, experience: 0 }; 
 }
 
-class SessionManager {
-    private sessions: Map<string, PlayerSession> = new Map();
-
-    /**
-     * Starts a new session for a player.
-     * @param playerId - Unique identifier for the player.
-     * @returns The created PlayerSession object.
-     */
-    startSession(playerId: string): PlayerSession {
-        const sessionId = Math.random().toString(36).substring(2, 15);
-        const session: PlayerSession = {
-            playerId,
-            sessionId,
-            startTime: new Date(),
-        };
-        this.sessions.set(sessionId, session);
-        return session;
-    }
-
-    /**
-     * Ends a session for a player.
-     * @param sessionId - Unique identifier for the session.
-     * @returns The ended PlayerSession object, or undefined if not found.
-     */
-    endSession(sessionId: string): PlayerSession | undefined {
-        const session = this.sessions.get(sessionId);
-        if (session) {
-            session.endTime = new Date();
-            this.sessions.delete(sessionId);
-        }
-        return session;
-    }
-
-    /**
-     * Retrieves all active sessions.
-     * @returns An array of PlayerSession objects.
-     */
-    getActiveSessions(): PlayerSession[] {
-        return Array.from(this.sessions.values()).filter(session => !session.endTime);
-    }
+function levelUp(stats: PlayerStats): PlayerStats {
+    stats.experience = 0;
+    stats.health += 20;
+    stats.mana += 10;
+    return stats;
 }
 
-// Example usage
-const sessionManager = new SessionManager();
-const session = sessionManager.startSession('player123');
-console.log(sessionManager.getActiveSessions());
-sessionManager.endSession(session.sessionId);
-console.log(sessionManager.getActiveSessions());
+function takeDamage(stats: PlayerStats, damage: number): PlayerStats {
+    stats.health -= damage;
+    if (stats.health < 0) stats.health = 0;
+    return stats;
+}
+
+function gainExperience(stats: PlayerStats, amount: number): PlayerStats {
+    stats.experience += amount;
+    return stats;
+}
+
+function restoreHealth(stats: PlayerStats, amount: number): PlayerStats {
+    stats.health += amount;
+    if (stats.health > 100) stats.health = 100;
+    return stats;
+}
+
+export { initializePlayerStats, levelUp, takeDamage, gainExperience, restoreHealth };
