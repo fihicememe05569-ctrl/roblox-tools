@@ -1,16 +1,16 @@
-export async function retry<T>(fn: () => Promise<T>, retries: number = 3, delay: number = 1000): Promise<T> {
-    for (let attempt = 0; attempt < retries; attempt++) {
+export async function retry<T>(operation: () => Promise<T>, retries: number = 3, delay: number = 1000): Promise<T> {
+    let attempt = 0;
+    while (attempt < retries) {
         try {
-            return await fn();
+            return await operation();
         } catch (error) {
-            if (attempt < retries - 1) {
-                console.warn(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`, error);
-                await new Promise(res => setTimeout(res, delay));
-            } else {
-                console.error(`All ${retries} attempts failed.`);
+            attempt++;
+            if (attempt >= retries) {
                 throw error;
             }
+            console.warn(`Attempt ${attempt} failed. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
-    throw new Error('Maximum retries reached.');
+    throw new Error('Operation failed after maximum retries.');
 }
