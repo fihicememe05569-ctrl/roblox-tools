@@ -1,35 +1,33 @@
-type PlayerStats = {
-    health: number;
-    mana: number;
-    experience: number;
-};
+type DataType = { id: string; value: any; timestamp: number; };
 
-function initializePlayerStats(): PlayerStats {
-    return { health: 100, mana: 50, experience: 0 }; 
+class DataService {
+    private dataStore: Map<string, DataType> = new Map();
+
+    addData(id: string, value: any): void {
+        const timestamp = Date.now();
+        this.dataStore.set(id, { id, value, timestamp });
+    }
+
+    getData(id: string): DataType | undefined {
+        return this.dataStore.get(id);
+    }
+
+    updateData(id: string, value: any): void {
+        if (this.dataStore.has(id)) {
+            const { timestamp } = this.dataStore.get(id)!;
+            this.dataStore.set(id, { id, value, timestamp });
+        } else {
+            throw new Error(`Data with ID: ${id} does not exist.`);
+        }
+    }
+
+    deleteData(id: string): boolean {
+        return this.dataStore.delete(id);
+    }
+
+    listAllData(): DataType[] {
+        return Array.from(this.dataStore.values());
+    }
 }
 
-function levelUp(stats: PlayerStats): PlayerStats {
-    stats.experience = 0;
-    stats.health += 20;
-    stats.mana += 10;
-    return stats;
-}
-
-function takeDamage(stats: PlayerStats, damage: number): PlayerStats {
-    stats.health -= damage;
-    if (stats.health < 0) stats.health = 0;
-    return stats;
-}
-
-function gainExperience(stats: PlayerStats, amount: number): PlayerStats {
-    stats.experience += amount;
-    return stats;
-}
-
-function restoreHealth(stats: PlayerStats, amount: number): PlayerStats {
-    stats.health += amount;
-    if (stats.health > 100) stats.health = 100;
-    return stats;
-}
-
-export { initializePlayerStats, levelUp, takeDamage, gainExperience, restoreHealth };
+export const dataService = new DataService();
