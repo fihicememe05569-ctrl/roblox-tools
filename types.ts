@@ -1,37 +1,30 @@
-export interface PlayerStats {
-    userId: string;
-    score: number;
-    level: number;
-}
+interface UserInput { name: string; age: number; email: string; }
 
-export interface GameSettings {
-    maxPlayers: number;
-    timeLimit: number;
-    mapName: string;
-}
+const validateInput = (input: UserInput): boolean => {
+    const { name, age, email } = input;
+    const nameRegex = /^[A-Za-z ]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-export interface GameEvent {
-    eventId: string;
-    eventType: string;
-    timestamp: Date;
-}
+    if (!nameRegex.test(name)) {
+        console.error('Invalid name format');
+        return false;
+    }
+    if (age < 0 || age > 120) {
+        console.error('Age must be between 0 and 120');
+        return false;
+    }
+    if (!emailRegex.test(email)) {
+        console.error('Invalid email format');
+        return false;
+    }
+    return true;
+};
 
-export type GameStatus = 'pending' | 'inProgress' | 'finished' | 'paused';
-
-export interface GameState {
-    players: PlayerStats[];
-    settings: GameSettings;
-    status: GameStatus;
-    lastEvent: GameEvent | null;
-}
-
-export const initialState: GameState = {
-    players: [],
-    settings: {
-        maxPlayers: 10,
-        timeLimit: 300,
-        mapName: 'DefaultMap'
-    },
-    status: 'pending',
-    lastEvent: null
+const mainProcessLoop = (input: UserInput) => {
+    if (validateInput(input)) {
+        console.log('Input is valid, processing...');
+        // Main processing logic here
+    } else {
+        console.error('Input validation failed');
+    }
 };
