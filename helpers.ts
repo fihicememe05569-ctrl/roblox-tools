@@ -1,24 +1,41 @@
-function isValidInput(input: any): boolean {
-    if (typeof input !== 'string') return false;
-    const trimmed = input.trim();
-    return trimmed.length > 0 && /^[a-zA-Z0-9_]+$/.test(trimmed);
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface LoggerOptions {
+    logPath: string;
+    maxSize: number;
+    rotationCount: number;
 }
 
-function processInput(input: any): void {
-    if (!isValidInput(input)) {
-        console.error('Invalid input. Please provide a valid string.');
-        return;
+class Logger {
+    private logFilePath: string;
+    private maxSize: number;
+    private rotationCount: number;
+
+    constructor(options: LoggerOptions) {
+        this.logFilePath = options.logPath;
+        this.maxSize = options.maxSize;
+        this.rotationCount = options.rotationCount;
+        fs.mkdirSync(path.dirname(this.logFilePath), { recursive: true });
     }
-    const processedInput = input.trim().toLowerCase();
-    console.log('Processing:', processedInput);
-}
 
-function mainLoop(inputs: any[]): void {
-    for (const input of inputs) {
-        processInput(input);
+    private rotateLogs() {
+        if (fs.existsSync(this.logFilePath) && fs.statSync(this.logFilePath).size >= this.maxSize) {
+            for (let i = this.rotationCount; i > 0; i--) {
+                const source = this.logFilePath + '.' + i;
+                const destination = this.logFilePath + '.' + (i + 1);
+                if (fs.existsSync(source)) {
+                    fs.renameSync(source, destination);
+                }
+            }
+            fs.renameSync(this.logFilePath, this.logFilePath + '.1');
+        }
+    }
+
+    public log(message: string) {
+        this.rotateLogs();
+        fs.appendFileSync(this.logFilePath, message + '\n');
     }
 }
 
-// Example usage:
-const userInputs = ['hello', 'world', '', '123!', null];
-mainLoop(userInputs);
+export default Logger;
