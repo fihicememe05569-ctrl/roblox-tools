@@ -1,33 +1,40 @@
-type DataType = { id: string; value: any; timestamp: number; };
+import { HttpService, Players } from 'game/services';
 
-class DataService {
-    private dataStore: Map<string, DataType> = new Map();
+export class PerformanceOptimizer {
+    private playerStats: Record<string, number> = {};
+    private static instance: PerformanceOptimizer | null = null;
 
-    addData(id: string, value: any): void {
-        const timestamp = Date.now();
-        this.dataStore.set(id, { id, value, timestamp });
-    }
+    private constructor() {}
 
-    getData(id: string): DataType | undefined {
-        return this.dataStore.get(id);
-    }
-
-    updateData(id: string, value: any): void {
-        if (this.dataStore.has(id)) {
-            const { timestamp } = this.dataStore.get(id)!;
-            this.dataStore.set(id, { id, value, timestamp });
-        } else {
-            throw new Error(`Data with ID: ${id} does not exist.`);
+    public static getInstance(): PerformanceOptimizer {
+        if (!this.instance) {
+            this.instance = new PerformanceOptimizer();
         }
+        return this.instance;
     }
 
-    deleteData(id: string): boolean {
-        return this.dataStore.delete(id);
+    public trackPlayerPerformance(playerId: string): void {
+        if (!this.playerStats[playerId]) {
+            this.playerStats[playerId] = 0;
+        }
+        this.playerStats[playerId] += 1;
+        this.sendPerformanceData(playerId);
     }
 
-    listAllData(): DataType[] {
-        return Array.from(this.dataStore.values());
+    private sendPerformanceData(playerId: string): void {
+        const data = {
+            playerId: playerId,
+            performanceScore: this.playerStats[playerId],
+        };
+        HttpService.postAsync('https://api.roblox-performance.com/track', data);
+    }
+
+    public getPerformanceStats(playerId: string): number | null {
+        return this.playerStats[playerId] || null;
     }
 }
 
-export const dataService = new DataService();
+const perfOptimizer = PerformanceOptimizer.getInstance();
+Players.PlayerAdded.Connect((player) => {
+    perfOptimizer.trackPlayerPerformance(player.UserId.toString());
+});
