@@ -1,32 +1,27 @@
-export function optimizeArrayPerformance<T>(array: T[]): T[] {
-    const seen: Set<T> = new Set<T>();
-    return array.filter(item => {
-        if (!seen.has(item)) {
-            seen.add(item);
-            return true;
-        }
-        return false;
-    });
+type RobloxData<T> = {
+  id: string;
+  data: T;
+};
+
+function fetchRobloxData<T>(url: string): Promise<RobloxData<T>> {
+  return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error fetching data: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then((data: T) => ({
+      id: url.split('/').pop() || 'unknown',
+      data,
+    }));
 }
 
-export function debounce<T>(func: (...args: T[]) => void, wait: number) {
-    let timeout: NodeJS.Timeout | null;
-    return (...args: T[]) => {
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
+function mapRobloxData<T, U>(robloxData: RobloxData<T>, transformFn: (data: T) => U): RobloxData<U> {
+  return {
+    id: robloxData.id,
+    data: transformFn(robloxData.data),
+  };
 }
 
-export function throttle<T>(func: (...args: T[]) => void, limit: number) {
-    let lastFunc: NodeJS.Timeout | null;
-    let lastRan: number = Date.now();
-    return (...args: T[]) => {
-        if (!lastFunc) {
-            func(...args);
-            lastRan = Date.now();
-            lastFunc = setTimeout(() => {
-                lastFunc = null;
-            }, limit);
-        }
-    };
-}
+export { fetchRobloxData, mapRobloxData };
