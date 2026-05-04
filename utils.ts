@@ -1,27 +1,39 @@
-type RobloxData<T> = {
-  id: string;
-  data: T;
-};
+import fs from 'fs';
+import path from 'path';
+import { createLogger, format, transports } from 'winston';
 
-function fetchRobloxData<T>(url: string): Promise<RobloxData<T>> {
-  return fetch(url)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Error fetching data: ${response.statusText}`);
-      }
-      return response.json();
+const logDir = 'logs';
+const maxSize = 5 * 1024 * 1024; // 5 MB
+const maxFiles = '14d'; // Keep logs for 14 days
+
+const transport = new transports.File({
+  filename: path.join(logDir, 'app-%DATE%.log'),
+  datePattern: 'YYYY-MM-DD',
+  zippedArchive: true,
+  maxSize: maxSize,
+  maxFiles: maxFiles
+});
+
+const logger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp(),
+    format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level}]: ${message}`;
     })
-    .then((data: T) => ({
-      id: url.split('/').pop() || 'unknown',
-      data,
-    }));
+  ),
+  transports: [
+    transport,
+    new transports.Console({
+      format: format.simple(),
+    }),
+  ],
+});
+
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
 }
 
-function mapRobloxData<T, U>(robloxData: RobloxData<T>, transformFn: (data: T) => U): RobloxData<U> {
-  return {
-    id: robloxData.id,
-    data: transformFn(robloxData.data),
-  };
-}
-
-export { fetchRobloxData, mapRobloxData };
+export const log = (level: string, message: string) => {
+  logger.log({ level, message });
+};
