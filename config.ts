@@ -1,66 +1,37 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface LoggerConfig {
-    logDir: string;
+    logDirectory: string;
     maxSize: number;
     maxFiles: number;
 }
 
-class Logger {
-    private logDir: string;
-    private maxSize: number;
-    private maxFiles: number;
-    private currentLogFile: string;
-    private currentLogStream: fs.WriteStream;
+const loggerConfig: LoggerConfig = {
+    logDirectory: path.join(__dirname, 'logs'),
+    maxSize: 5 * 1024 * 1024, // 5 MB
+    maxFiles: 5
+};
 
-    constructor(config: LoggerConfig) {
-        this.logDir = config.logDir;
-        this.maxSize = config.maxSize;
-        this.maxFiles = config.maxFiles;
-        this.currentLogFile = this.getLogFilePath();
-        this.currentLogStream = this.createLogStream();
-    }
+if (!fs.existsSync(loggerConfig.logDirectory)) {
+    fs.mkdirSync(loggerConfig.logDirectory);
+}
 
-    private getLogFilePath(): string {
-        const date = new Date().toISOString().slice(0, 10);
-        return path.join(this.logDir, `log-${date}.txt`);
-    }
-
-    private createLogStream(): fs.WriteStream {
-        return fs.createWriteStream(this.currentLogFile, { flags: 'a' });
-    }
-
-    public log(message: string): void {
-        this.currentLogStream.write(`${new Date().toISOString()} - ${message}\n`);
-        this.checkLogRotation();
-    }
-
-    private checkLogRotation(): void {
-        const stats = fs.statSync(this.currentLogFile);
-        if (stats.size >= this.maxSize) {
-            this.rotateLogFiles();
-        }
-    }
-
-    private rotateLogFiles(): void {
-        this.currentLogStream.end();
-        for (let i = this.maxFiles; i >= 0; i--) {
-            const oldFile = path.join(this.logDir, `log-${(new Date(Date.now() - i * 86400000)).toISOString().slice(0, 10)}.txt`);
-            const newFile = path.join(this.logDir, `log-old-${i}.txt`);
-            if (fs.existsSync(oldFile)) {
-                fs.renameSync(oldFile, newFile);
-            }
-        }
-        this.currentLogFile = this.getLogFilePath();
-        this.currentLogStream = this.createLogStream();
+function rotateLogs() {
+    const files = fs.readdirSync(loggerConfig.logDirectory);
+    if (files.length > loggerConfig.maxFiles) {
+        const sortedFiles = files.sort();
+        const filesToDelete = sortedFiles.slice(0, sortedFiles.length - loggerConfig.maxFiles);
+        filesToDelete.forEach(file => {
+            fs.unlinkSync(path.join(loggerConfig.logDirectory, file));
+        });
     }
 }
 
-const loggerConfig: LoggerConfig = {
-    logDir: './logs',
-    maxSize: 5 * 1024 * 1024,
-    maxFiles: 5,
-};
+function logMessage(message: string) {
+    const logFile = path.join(loggerConfig.logDirectory, `log_${new Date().toISOString().split('T')[0]}.txt`);
+    fs.appendFileSync(logFile, `${new Date().toISOString()}: ${message}\n`);
+    rotateLogs();
+}
 
-export const logger = new Logger(loggerConfig);
+export { logMessage };
