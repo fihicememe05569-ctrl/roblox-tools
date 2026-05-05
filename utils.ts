@@ -1,39 +1,36 @@
-import fs from 'fs';
-import path from 'path';
-import { createLogger, format, transports } from 'winston';
-
-const logDir = 'logs';
-const maxSize = 5 * 1024 * 1024; // 5 MB
-const maxFiles = '14d'; // Keep logs for 14 days
-
-const transport = new transports.File({
-  filename: path.join(logDir, 'app-%DATE%.log'),
-  datePattern: 'YYYY-MM-DD',
-  zippedArchive: true,
-  maxSize: maxSize,
-  maxFiles: maxFiles
-});
-
-const logger = createLogger({
-  level: 'info',
-  format: format.combine(
-    format.timestamp(),
-    format.printf(({ timestamp, level, message }) => {
-      return `${timestamp} [${level}]: ${message}`;
-    })
-  ),
-  transports: [
-    transport,
-    new transports.Console({
-      format: format.simple(),
-    }),
-  ],
-});
-
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir);
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const log = (level: string, message: string) => {
-  logger.log({ level, message });
-};
+async function retry<T>(fn: () => Promise<T>, attempts: number, delay: number): Promise<T> {
+    let lastError;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error;
+            if (i < attempts - 1) {
+                await sleep(delay);
+            }
+        }
+    }
+    throw lastError;
+}
+
+// Example usage
+async function fetchData(): Promise<string> {
+    const response = await fetch('https://api.example.com/data');
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.text();
+}
+
+(async () => {
+    try {
+        const data = await retry(fetchData, 3, 1000);
+        console.log('Data fetched successfully:', data);
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+    }
+})();
